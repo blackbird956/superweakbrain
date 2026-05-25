@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心理测试</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #ffffff;
+            color: #333333;
+            overflow: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+        /* 按钮通用样式 */
+        .btn {
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        /* 开始界面按钮 */
+        .start-btn {
+            background-color: #333;
+            color: #fff;
+        }
+        .start-btn:hover {
+            background-color: #555;
+        }
+        /* 问题区域样式 */
+        .question-box {
+            display: none;
+            width: 100%;
+        }
+        .question-text {
+            font-size: 20px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-weight: 500;
+            text-align: left;
+        }
+        .en-text {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 40px;
+            text-align: left;
+        }
+        /* 选项卡容器 */
+        .options-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        /* 答题选项卡样式 */
+        .option-card {
+            flex: 1;
+            padding: 25px 15px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            text-align: left;
+            transition: transform 0.1s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 180px;
+        }
+        .option-card:active {
+            transform: scale(0.98);
+        }
+        .card-zh {
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+        .card-en {
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.3;
+        }
+        /* 红色选项 */
+        .option-red {
+            background-color: #e54d80;
+        }
+        /* 蓝色选项 */
+        .option-blue {
+            background-color: #2b73af;
+        }
+        /* 底部提示文字 */
+        .hint-text {
+            font-size: 14px;
+            color: #999;
+            margin-top: 20px;
+        }
+        /* 最终结算界面 */
+        .result-box {
+            display: none;
+            width: 100%;
+            cursor: pointer; /* 让用户知道整页可点击 */
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .fade-text {
+            font-size: 22px;
+            line-height: 1.8;
+            color: #222;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+        .fade-in {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 1. 开始界面 -->
+    <div id="start-view">
+        <button class="btn start-btn" onclick="startQuiz()">按下按钮开始答题</button>
+    </div>
+
+    <!-- 2. 答题界面 -->
+    <div id="question-view" class="question-box">
+        <div class="question-text" id="q-zh">问题加载中...</div>
+        <div class="en-text" id="q-en">Loading...</div>
+        
+        <div class="options-container">
+            <div class="option-card option-red" onclick="nextQuestion()">
+                <div class="card-zh" id="opt-a-zh">A. 删，要完美的句号</div>
+                <div class="card-en" id="opt-a-en">A. Delete it.</div>
+            </div>
+            <div class="option-card option-blue" onclick="nextQuestion()">
+                <div class="card-zh" id="opt-b-zh">B. 不删，没做的事教我的东西更深刻。</div>
+                <div class="card-en" id="opt-b-en">B. Don't delete it.</div>
+            </div>
+        </div>
+        <div class="hint-text">请按下与你所选选项颜色对应的按钮</div>
+    </div>
+
+    <!-- 3. 结果结算界面 -->
+    <div id="result-view" class="result-box" onclick="showNextResultLine()">
+        <div id="result-line-1" class="fade-text"></div>
+        <div id="result-line-2" class="fade-text">这段宝贵的时光已为您存档，向您的谨慎致敬</div>
+    </div>
+</div>
+
+<script>
+    // 7个问题的题库数据
+    const questions = [
+        {
+            zh: "1. 人生必做清单里有几件事永远没机会做了，可以删除这段记忆，让自己觉得了无遗憾。你会选择删除吗？",
+            en: "1. There are several things on the must-do list in life that you will never have a chance to do. You can delete this memory and make yourself feel no regrets. Will you choose to delete it?",
+            a_zh: "A. 删，要完美的句号", a_en: "A. Delete it.",
+            b_zh: "B. 不删，没做的事教我的东西更深刻。", b_en: "B. Don't delete it."
+        },
+        {
+            zh: "2. 如果能提前得知生命中某一个重要决定的最终结果，你会选择看剧透吗？",
+            en: "2. If you could know the final outcome of an important decision in your life in advance, would you choose to look at the spoiler?",
+            a_zh: "A. 看，避开未知的焦虑", a_en: "A. Yes, to avoid anxiety.",
+            b_zh: "B. 不看，盲盒才是人生", b_en: "B. No, life is a mystery box."
+        },
+        {
+            zh: "3. 面对一段注定会结束但过程非常美好的感情，你最初会选择开始吗？",
+            en: "3. Facing a relationship that is destined to end but is very beautiful, would you choose to start it at first?",
+            a_zh: "A. 开始，不在乎天长地久", a_en: "A. Start it, live in the moment.",
+            b_zh: "B. 拒绝，及时止损避免受伤", b_en: "B. Reject it, avoid future pain."
+        },
+        {
+            zh: "4. 如果可以用十年的好运换取一个瞬间的奇迹，现在的你会交换吗？",
+            en: "4. If you could exchange ten years of good luck for a single moment of miracle, would you exchange it now?",
+            a_zh: "A. 换，为了刹那的极致", a_en: "A. Exchange, for the ultimate moment.",
+            b_zh: "B. 不换，平平淡淡才是真", b_en: "B. No, peace is more valuable."
+        },
+        {
+            zh: "5. 当你需要向最亲近的人撒一个善意的谎言时，你会感到愧疚吗？",
+            en: "5. When you need to tell a white lie to someone closest to you, would you feel guilty?",
+            a_zh: "A. 会，谎言终究是谎言", a_en: "A. Yes, a lie is still a lie.",
+            b_zh: "B. 不会，出发点是为了对方", b_en: "B. No, the intention is good."
+        },
+        {
+            zh: "6. 如果可以拥有一项超能力，是回到过去还是前往未来更吸引你？",
+            en: "6. If you could have a superpower, would returning to the past or going to the future appeal to you more?",
+            a_zh: "A. 回到过去，弥补遗憾", a_en: "A. Back to past, fix regrets.",
+            b_zh: "B. 前往未来，探索未知", b_en: "B. To the future, explore unknown."
+        },
+        {
+            zh: "7. 最后一个问题：你觉得在过去的几分钟里，你的选择是完全出于真心吗？",
+            en: "7. Final question: Do you feel that your choices in the past few minutes were entirely from your heart?",
+            a_zh: "A. 是的，绝对真诚", a_en: "A. Yes, absolutely sincere.",
+            b_zh: "B. 摇摆过，很难确定", b_en: "B. Uncertain, I hesitated."
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let startTime = 0;
+    let totalSeconds = 0;
+    let resultStep = 0;
+
+    // 开始答题
+    function startQuiz() {
+        document.getElementById('start-view').style.display = 'none';
+        document.getElementById('question-view').style.display = 'block';
+        // 记录点击开始时的时间戳（毫秒）
+        startTime = new Date().getTime();
+        renderQuestion();
+    }
+
+    // 渲染当前题目数据
+    function renderQuestion() {
+        const q = questions[currentQuestionIndex];
+        document.getElementById('q-zh').innerText = q.zh;
+        document.getElementById('q-en').innerText = q.en;
+        document.getElementById('opt-a-zh').innerText = q.a_zh;
+        document.getElementById('opt-a-en').innerText = q.a_en;
+        document.getElementById('opt-b-zh').innerText = q.b_zh;
+        document.getElementById('opt-b-en').innerText = q.b_en;
+    }
+
+    // 点击选项，进入下一题
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            renderQuestion();
+        } else {
+            // 答题结束，计算时间
+            let endTime = new Date().getTime();
+            // 计算总秒数（取整）
+            totalSeconds = Math.round((endTime - startTime) / 1000);
+            showBlankResult();
+        }
+    }
+
+    // 切换到空白结算页
+    function showBlankResult() {
+        document.getElementById('question-view').style.display = 'none';
+        // 显示结果视图（初始里面两个div都是透明度0）
+        document.getElementById('result-view').style.display = 'flex';
+        
+        // 动态填入第一句话的秒数
+        document.getElementById('result-line-1').innerText = `“您在答题过程中，一共犹豫了 ${totalSeconds} 秒”`;
+
+        // 1秒后自动渐显第一行字
+        setTimeout(() => {
+            document.getElementById('result-line-1').classList.add('fade-in');
+            resultStep = 1; // 标记第一阶段完成
+        }, 1000);
+    }
+
+    // 点击页面，渐显第二句话
+    function showNextResultLine() {
+        if (resultStep === 1) {
+            document.getElementById('result-line-2').classList.add('fade-in');
+            resultStep = 2; // 流程结束
+        }
+    }
+</script>
+
+</body>
+</html>
